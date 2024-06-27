@@ -2,64 +2,68 @@
 
 namespace Occasion;
 
-class User
-{
-    private string $email;
-    private string $password;
-    public static array $users = [];
-    private array $favorites = [];
+use PDO;
 
-    public function __construct(string $email, string $password)
-    {
-        $this->email = $email;
-        $this->password = password_hash($password, PASSWORD_DEFAULT);
-        self::$users[] = $this;
-    }
+class User {
+    protected int $id;
+    protected string $email;
+    protected string $passwordHash;
+    protected int $isAdmin;
 
-    public function getMail(): string
-    {
-        return $this->email;
-    }
-
-    public function getPassword(): string
-    {
-        return $this->password;
-    }
-    
-    public function printFavorites(): void
-    {
-        echo '<h1>Favoriete auto\'s van ' . $this->email . ': <br></h1>';
-        $favoriteCars = $this->getFavorites();
-        if (!empty($favoriteCars)) {
-            foreach ($favoriteCars as $vehicle) {
-                echo '<br>' . $vehicle->printVehicleInfo() . '</br>';
-            }
-        } else {
-            echo 'Geen favoriete auto\'s gevonden.';
+    public function __construct(int $id = null, string $email = '', string $passwordHash = '', int $isAdmin = 0) {
+        if ($id !== null) {
+            $this->id = $id;
         }
-    }
-
-    public function addFavorite($favorite)
-    {
-        if (!in_array($favorite, $this->favorites)) {
-            $this->favorites[] = $favorite;
+        if ($email !== '') {
+            $this->email = $email;
         }
-    }
-
-    public function removeFavorite($favorite)
-    {
-        $key = array_search($favorite, $this->favorites);
-
-        if ($key !== false) {
-            unset($this->favorites[$key]);
-            $this->favorites = array_values($this->favorites);
+        if ($passwordHash !== '') {
+            $this->passwordHash = $passwordHash;
         }
+        $this->isAdmin = $isAdmin;
     }
 
-    public function getFavorites()
+    public static function registerUser(string $email, string $password): bool
     {
-        return $this->favorites;
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        $data = [
+            'Email' => $email,
+            'PasswordHash' => $passwordHash
+        ];
+        return Db::$db->insert('users', $data);
+    }
+
+    public static function loginUser(string $email, string $password): User|null
+    {
+        $user = Db::$db->select('users', ['UserID', 'Email', 'PasswordHash', 'IsAdmin'], "Email = '$email'")[0] ?? null;
+        if ($user && password_verify($password, $user['PasswordHash'])) {
+            $userID = $user['UserID'];
+            Db::$db->update('users', ['LastLogin' => 'CURRENT_TIMESTAMP'], "UserID = '$userID'");
+
+            return new User($user['UserID'], $user['Email'], $user['PasswordHash'], $user['IsAdmin']);
+        }
+        return null;
+    }
+
+    public static function findById(int $id): ?self {
+        $result = Db::$db->select('users', ['*'], "UserID = $id")[0] ?? null;
+        if ($result) {
+            return new self($result['UserID'], $result['Email'], $result['PasswordHash']);
+        }
+        return null;
+    }
+
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->isAdmin == 1;
     }
 
 
 }
+?>

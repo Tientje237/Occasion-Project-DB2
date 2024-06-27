@@ -2,22 +2,39 @@
 
 namespace Occasion;
 
-class Suv extends Car
+class SUV extends Car
 {
-    Private string $carosserie;
+    private string $carrosserie;
 
-    Public function __construct(string $brand, string $model, string $price, string $hpower, string $mileage, string $year, string $color, string $fueltype, string $Interior, string $transmission, int $seats, string $specifications)
+    public function __construct(array $data)
     {
-        parent::__construct($brand, $model, $price, $hpower, $mileage, $year, $color, $fueltype, $Interior, $transmission, $seats, $specifications);
-        $this->carosserie = 'Suv';
+        parent::__construct(
+            $data['ID'],
+            $data['brand'],
+            $data['model'],
+            $data['price'],
+            $data['horsepower'],
+            $data['mileage'],
+            $data['year'],
+            $data['color'],
+            $data['fueltype'],
+            $data['interior'],
+            $data['transmission'],
+            $data['seats'],
+            $data['specifications']
+        );
+        $this->carrosserie = 'SUV';
     }
 
     public function printVehicleInfo(): string
     {
         return "$this->brand $this->model <br> €$this->price | $this->year | $this->mileage km<br><br>";
     }
+
     public function vehicleDetails(): string
     {
-        return "$this->brand $this->model <br> €$this->price <br> $this->hpower pk <br> $this->mileage km<br> Datum Deel 1: $this->year <br> Carosserie: $this->carosserie <br> Kleur: $this->color <br> Brandstof: $this->fueltype <br> Interieur: $this->Interior <br> Transmissie: $this->transmission <br> Aantal stoelen: $this->seats <br> Specificaties: $this->specifications <br><br>";
+        return "$this->brand $this->model <br> €$this->price <br> $this->hpower pk <br> $this->mileage km<br> Datum Deel 1: $this->year <br> Carrosserie: $this->carrosserie <br> Kleur: $this->color <br> Brandstof: $this->fueltype <br> Interieur: $this->Interior <br> Transmissie: $this->transmission <br> Aantal stoelen: $this->seats <br> Specificaties: $this->specifications <br><br>";
     }
 }
+
+?>

@@ -1,4 +1,4 @@
-{extends file='Layout.tpl'}
+{*{extends file='Layout.tpl'}*}
 
 {block name="contentRegister"}
 

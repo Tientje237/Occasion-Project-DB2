@@ -1,18 +1,25 @@
-{extends file='Layout.tpl'}
+{*{extends file="Layout.tpl"}*}
 
-{block name="contentFavorite"}
-    <h1>Favorieten van: {$current_user->getMail()}</h1>
-    {if !empty($favorites)}
-        {foreach $favorites as $favorite}
-            <div>
-                {$favorite}
-                <form method="post" action="index.php?action=favorieten">
-                    <input type="hidden" name="favorite" value="{$favorite}">
-                    <button name="removeFavorite" type="submit">Verwijder uit favorieten</button>
-                </form>
-            </div>
-        {/foreach}
+{block name="content"}
+    <title>Occasion Favorieten</title>
+    <h2>Favoriete Auto's</h2>
+    {if empty($favorites)}
+        <p>Je hebt nog geen auto's aan favorieten toegevoegd.</p>
     {else}
-        <p>Je hebt nog geen favorieten.</p>
+        <ul>
+            {foreach $favorites as $favorite}
+                <div>
+                    <h2>{$car.brand} {$car.model}</h2>
+                    <p>Prijs: €{$car.price}</p>
+                    <a href="index.php?action=detailpagina&id={$car.ID}">Bekijk details</a>
+                    <br><br>
+                    <form method="post" action="index.php?action=favorieten">
+                        <input type="hidden" name="car_id" value="{$car.ID}">
+                        <input type="hidden" name="remove" value="1">
+                        <button type="submit">Verwijderen uit favorieten</button>
+                    </form>
+                </div>
+            {/foreach}
+        </ul>
     {/if}
 {/block}

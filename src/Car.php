@@ -4,25 +4,25 @@ namespace Occasion;
 
 abstract class Car
 {
-    Protected string $id;
+    Protected int $id;
     Protected string $brand;
     Protected string $model;
     Protected string $price;
     Protected string $hpower;
     Protected string $mileage;
     Protected string $year;
+
     Protected string $color;
     Protected string $fueltype;
     Protected string $Interior;
     Protected string $transmission;
     Protected int $seats;
     Protected string $specifications;
-
     public static array $allCars = [];
 
-    Public function __construct(string $brand, string $model, string $price, string $hpower, string $mileage, string $year, string $color, string $fueltype, string $Interior, string $transmission, int $seats, string $specifications)
+    Public function __construct(int $id, string $brand, string $model, string $price, string $hpower, string $mileage, string $year, string $color, string $fueltype, string $Interior, string $transmission, int $seats, string $specifications)
     {
-        $this->id = uniqid();
+        $this->id = $id;
         $this->brand = $brand;
         $this->model = $model;
         $this->price = $price;
@@ -38,11 +38,90 @@ abstract class Car
         array_push(self::$allCars, $this);
     }
 
+    public static function getDetail(int $id): StationWagon|SUV|Sedan|Coupe|null
+    {
+        $carDetail = Db::$db->select('car', ['*'], "ID = $id")[0] ?? null;
+
+            switch (strtolower($carDetail['carrosserie'])) {
+                case 'stationwagon':
+                    return new StationWagon($carDetail);
+
+                case 'suv':
+                    return new SUV($carDetail);
+
+                case 'sedan':
+                    return new Sedan($carDetail);
+
+                case 'coupe':
+                    return new Coupe($carDetail);
+
+                default:
+                    return null;
+            }
+    }
+
+    public static function deleteCar(int $id): bool
+    {
+        return Db::$db->delete('Car', "ID = '$id'");
+    }
+
+
+    //Getters
     public function getId(): string
     {
         return $this->id;
     }
 
+    public function getBrand(): string {
+        return $this->brand;
+    }
+
+    public function getModel() {
+        return $this->model;
+    }
+
+    public function getPrice() {
+        return $this->price;
+    }
+
+    public function getHorsePower() {
+        return $this->hpower;
+    }
+
+    public function getMileage() {
+        return $this->mileage;
+    }
+
+    public function getYear() {
+        return $this->year;
+    }
+
+    public function getColor() {
+        return $this->color;
+    }
+
+    public function getFuelType() {
+        return $this->fueltype;
+    }
+
+    public function getInterior() {
+        return $this->Interior;
+    }
+
+    public function getTransmission() {
+        return $this->transmission;
+    }
+
+    public function getSeats() {
+        return $this->seats;
+    }
+
+    public function getSpecifications() {
+        return $this->specifications;
+    }
+
+
+    //Setters
     public function setBrand(string $brand): void
     {
         $this->brand = $brand;
@@ -103,71 +182,7 @@ abstract class Car
         $this->specifications = $specifications;
     }
 
-    public static function getAllCars()
-    {
-        echo '<h1>Alle voertuigen: <br></h1>';
-        foreach (self::$allCars as $vehicle) {
-            echo "<br>" . $vehicle->getVehicle() . "</br>";
-        }
-    }
 
-    public function vehicleDetails()
-    {
-        return $this->brand . ' ' . $this->model . ' ' . $this->price . ' ' . $this->hpower . ' ' . $this->mileage . ' ' . $this->year . ' ' . $this->color . ' ' . $this->fueltype . ' ' . $this->Interior . ' ' . $this->transmission . ' ' . $this->seats . ' ' . $this->specifications;
-    }
-
-    public function getBrand(): string {
-        return $this->brand;
-    }
-
-    public function getModel() {
-        return $this->model;
-    }
-
-    public function getPrice() {
-        return $this->price;
-    }
-
-    public function getHorsePower() {
-        return $this->hpower;
-    }
-
-    public function getMileage() {
-        return $this->mileage;
-    }
-
-    public function getYear() {
-        return $this->year;
-    }
-
-    public function getColor() {
-        return $this->color;
-    }
-
-    public function getFuelType() {
-        return $this->fueltype;
-    }
-
-    public function getInterior() {
-        return $this->Interior;
-    }
-
-    public function getTransmission() {
-        return $this->transmission;
-    }
-
-    public function getSeats() {
-        return $this->seats;
-    }
-
-    public function getSpecifications() {
-        return $this->specifications;
-    }
-
-    public function isFavorite(): bool
-    {
-        return isset($_SESSION['favorites']) && in_array($this->id, $_SESSION['favorites']);
-    }
 
     abstract public function printVehicleInfo(): string;
 

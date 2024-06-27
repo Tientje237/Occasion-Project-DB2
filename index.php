@@ -2,82 +2,131 @@
 
 require_once "vendor/autoload.php";
 
+use Occasion\Car;
+use Occasion\Db;
 use Occasion\User;
 use Smarty\Smarty;
-use Occasion\Navigation;
 use Occasion\CarList;
-use Occasion\Stationwagon;
-use Occasion\Suv;
-use Occasion\Coupe;
-use Occasion\Sedan;
 
 session_start();
 
+
+$database = new Db();
+
 $action = $_GET['action'] ?? null;
-$current_user = $_SESSION['current_user'] ?? null;
-$users = $_SESSION['users'] ?? [];
+$user = $_SESSION['user'] ?? null;
 
 $template = new Smarty();
 $template->setTemplateDir("templates");
 $template->clearCompiledTemplate();
 $template->clearAllCache();
 
-$navigation = new Navigation();
+
+echo "Occasion site<br>";
+
+if (isset($_SESSION['user'])) {
+    if ($_SESSION['user']->isAdmin()) {
+        echo "<td><a href='index.php?action=admin'>Admin Dashboard</a><br></td>";
+    }
+    echo "<td><a href='index.php?action=aanbod'>Aanbod</a><br></td>";
+    echo "<td><a href='index.php?action=favorieten'>Favorieten</a><br></td>";
+    echo "<td><a href='index.php?action=zoeken'>Zoeken</a><br></td>";
+    echo "<td><a href='index.php?action=logout'>Uitloggen</a><br></td>";
+} else {
+    echo "<td><a href='index.php?action=aanbod'>Aanbod</a><br></td>";
+    echo "<td><a href='index.php?action=favorieten'>Favorieten</a><br></td>";
+    echo "<td><a href='index.php?action=zoeken'>Zoeken</a><br></td>";
+    echo "<td><a href='index.php?action=login'>Inloggen</a><br></td>";
+    echo "<td><a href='index.php?action=register'>Registreren</a><br></td>";
+}
+echo "<br><br>";
+
+
 
 $carList = new CarList();
-$car1 = new Stationwagon("Audi", "RS6 ABT Legacy Edition", "150.000", "760", "3.100", "2023", "Nardogrijs", "Benzine", "Zwart leder", "Automaat/Tiptronic", 5, "Full Option");
-$car2 = new Suv("Audi", "RSQ8", "189.900", "600", "13.190", "2022", "Mythoszwart metallic", "Benzine", "Zwart leder", "Automaat/Tiptronic", 5, "Full Option");
-$car3 = new Coupe("Porsche", "992 Carrera 4 GTS", "208.880", "480", "10.870", "2022", "Kreide", "Benzine", "Zwart leder", "Automaat/PDK", 4, "Full Option");
-$car4 = new Coupe("Porsche", "992 GT3 RS", "250.000", "520", "3.250", "2022", "Haaiblauw", "Benzine", "Race-Tex (haaiblauw)", "Automaat/PDK", 2, "Full Option");
-$car5 = new Coupe("Porsche", "911 Dakar", "409.900", "480", "78", "2023", "Wit / Gentiaanblauw", "Benzine", "Race-Tex Rallye (haaiblauw)", "Automaat/PDK", 2, "Full Option");
-$car6 = new Sedan("BMW", "M3", "120.000", "450", "50.000", "2018", "Black", "Benzine", "Zwart leder", "Automatic/Steptronic", 5, "Full Option");
-$car7 = new Sedan("BMW", "M5 Competition", "183.500", "625", "10.000", "2022", "Donington Grijs Metallic", "Benzine", "Zwart leder", "Automatic/Steptronic", 5, "Full Option");
-$car8 = new Stationwagon("BMW", "M3 Competion Touring", "151.800", "510", "10.000", "2022", "Isle of Man groen metallic", "Benzine", "Zwart leder", "Automatic/Steptronic", 5, "Full Option");
-$car9 = new Sedan("Audi", "A6", "55.000", "200", "100.000", "2018", "Zwart", "Benzine", "Zwart leder", "Handgeschakeld", 5, "Full Option");
 
-$car9->setModel("S6");
-$car9->setPrice("65.000");
-$car9->setTransmission("Automatic/Tiptronic");
-
-echo $navigation->generate();
-
-$carList->addVehicle($car1);
-$carList->addVehicle($car2);
-$carList->addVehicle($car3);
-$carList->addVehicle($car4);
-$carList->addVehicle($car5);
-$carList->addVehicle($car6);
-$carList->addVehicle($car7);
-$carList->addVehicle($car8);
-
-
-switch ($action) {
-
+switch($action)
+{
     case "detailpagina":
-        echo $car1->vehicleDetails();
-        break;
-    case "detailpagina2":
-        echo $car9->vehicleDetails();
-        break;
-    case "categorie":
+        $car_id = $_GET['id'] ?? null;
+        if ($car_id) {
+            $car = Car::getDetail($car_id);
 
+            if ($car) {
+                // Voeg logica toe voor favorieten toevoegen indien nodig
+                $is_favorite = false;
+                if (isset($_SESSION['user_id'])) {
+                    $favorites = $user->getFavorites();
+                    if (in_array($car_id, $favorites)) {
+                        $is_favorite = true;
+                    }
+                }
+
+                $template->assign('car', $car);
+                $template->assign('is_favorite', $is_favorite);
+                $template->display("CarDetails.tpl");
+            } else {
+                echo "Auto niet gevonden.";
+            }
+        } else {
+            echo "Geen auto ID opgegeven.";
+        }
         break;
+
 
     case "aanbod":
-        
-//      echo "<td><a href='index.php?action=detailpagina'>", $car1->printVehicleInfo(), "</a></td>";
-//      echo "<td><a href='index.php?action=detailpagina2'>", $car9->printVehicleInfo(), "</a></td>";
-        $allCars = $carList->getAllCars();
-        $template->assign('allCars', $allCars);
-        $template->display("ShowCase.tpl");
-
+        $cars = $carList->getAllCars();
+        $template->assign('cars', $cars);
+        $template->display("CarList.tpl");
         break;
+
+
+    case "admin":
+        if (!$user || !$user->isAdmin()) {
+            echo "Access denied. Admin privileges required.";
+            exit;
+        }
+
+        echo "<h1>Admin Dashboard</h1>";
+        echo "<h2>Je kan hier het aanbod beheren door voertuigen te verwijderen</h2>";
+        $cars = $carList->getAllCars();
+        $template->assign('cars', $cars);
+        $template->display("AdminList.tpl");
+        break;
+
+    case "verwijderen":
+        if (!$user || !$user->isAdmin()) {
+            echo "Access denied. Admin privileges required.";
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['car_id'])) {
+            $car_id = $_POST['car_id'];
+
+            $car = Car::getDetail($car_id);
+            if ($car) {
+                $deleted = $car->deleteCar("$car_id");
+                if ($deleted) {
+                    echo "Auto met ID {$car_id} succesvol verwijderd.";
+                } else {
+                    echo "Fout bij het verwijderen van de auto met ID {$car_id}.";
+                }
+            } else {
+                echo "Auto niet gevonden.";
+            }
+        } else {
+            echo "Ongeldige aanvraag voor verwijderen.";
+        }
+        break;
+
+
 
     case "zoeken":
         $searchResults = [];
         $term = "";
         if (isset($_POST['searchTerm'])) {
             $term = $_POST['searchTerm'];
+            $carList = new CarList();
             $searchResults = $carList->searchCars($term);
         }
 
@@ -88,46 +137,60 @@ switch ($action) {
 
 
     case "favorieten":
+        if (!isset($_SESSION['user_id'])) {
+            echo "Log in om favorieten te beheren.";
+            exit;
+        }
+        $user_id = $_SESSION['user_id'];
 
-        if (isset($current_user) && is_object($current_user)) {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['car_id'])) {
+            $car_id = $_POST['car_id'];
 
-            if (isset($_POST['addFavorite'])) {
-                $favoriteCar = $_POST['addFavorite'];
-                $current_user->addFavorite($favoriteCar);
+            if (isset($_POST['remove'])) {
+                $stmt = $pdo->prepare('DELETE FROM Favorites WHERE UserID = ? AND CarID = ?');
+                $stmt->execute([$user_id, $car_id]);
+            } else {
+                $stmt_check = $pdo->prepare('SELECT COUNT(*) FROM Favorites WHERE UserID = ? AND CarID = ?');
+                $stmt_check->execute([$user_id, $car_id]);
+                $is_favorite = (bool) $stmt_check->fetchColumn();
+
+                if (!$is_favorite) {
+                    $stmt = $pdo->prepare('INSERT INTO Favorites (UserID, CarID) VALUES (?, ?)');
+                    $stmt->execute([$user_id, $car_id]);
+                }
             }
 
-
-            if (isset($_POST['removeFavorite']) && isset($_POST['favorite'])) {
-                $favoriteToRemove = $_POST['favorite'];
-                $current_user->removeFavorite($favoriteToRemove);
-            }
-
-            $favorites = $current_user->getFavorites();
-            $template->assign('favorites', $favorites);
-            $template->assign('current_user', $current_user);
-
-            $template->display("Favorites.tpl");
-        } else {
-            die("Gebruiker is niet ingelogd om favorieten te kunnen markeren.");
+            header('Location: index.php?action=favorieten');
+            exit();
         }
 
-
+        $stmt = $pdo->prepare('SELECT Car.* FROM Car JOIN Favorites ON Car.ID = Favorites.CarID WHERE Favorites.UserID = ?');
+        $stmt->execute([$user_id]);
+        $favorites = $stmt->fetchAll();
+        $template->assign('favorites', $favorites);
+        $template->display("Favorites.tpl");
         break;
+
 
     case "register":
         $success = '';
         $error = '';
-
         if (!empty($_POST['email']) && !empty($_POST['password1']) && !empty($_POST['password2'])) {
             if (filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-                if ($_POST['password1'] === $_POST['password2']) {
-                    $new_user = new User($_POST['email'], $_POST['password1']);
-                    $users[] = $new_user;
-                    $_SESSION['users'] = $users;
-                    $success = 'User registered successfully.';
+                if ($_POST['password1'] == $_POST['password2']) {
+                    $email = $_POST['email'];
+                    $password = $_POST['password1'];
 
-                    header('Refresh: 2; URL=index.php?action=login');
-                    exit;
+
+                    $registered = User::registerUser($email, $password);
+
+                    if ($registered) {
+                        $success = 'User registered successfully.';
+                        header('Location: index.php?action=login', true, 303);
+                        exit();
+                    } else {
+                        $error = 'Failed to register user.';
+                    }
                 } else {
                     $error = 'Passwords do not match.';
                 }
@@ -137,58 +200,47 @@ switch ($action) {
         } else {
             $error = 'All fields are required.';
         }
-
-        if (isset($success)) {
-            $template->assign('success', $success);
-        }
-        if (isset($error)) {
-            $template->assign('error', $error);
-        }
-
+        $template->assign('success', $success);
+        $template->assign('error', $error);
         $template->display("RegisterForm.tpl");
         break;
 
     case "login":
+        $template->display("LoginForm.tpl");
         $success = '';
         $error = '';
 
         if (!empty($_POST['email']) && !empty($_POST['password1'])) {
-            foreach ($users as $user) {
-                if ($user->getMail() == $_POST['email']) {
-                    if (password_verify($_POST['password1'], $user->getPassword())) {
-                        $_SESSION['current_user'] = $user;
-                        $success = 'User logged in successfully.';
-                        header('Refresh: 2; URL=index.php?action=aanbod');
-                        exit;
-                    } else {
-                        $error = 'Invalid password.';
-                    }
-                    break;
-                }
-            }
-            if (empty($success)) {
-                $error = 'Invalid email address.';
+            $email = $_POST['email'];
+            $password = $_POST['password1'];
+
+            $user = User::loginUser($email, $password);
+            // van array object van user maken
+
+            if ($user) {
+                $_SESSION['user'] = $user;
+                $success = 'User logged in successfully.';
+                header('Location: index.php?action=aanbod', true, 303);
+                exit();
+            } else {
+                $error = 'Invalid email or password.';
             }
         } else {
             $error = 'All fields are required.';
         }
 
-        if (isset($success)) {
-            $template->assign('success', $success);
-        }
-        if (isset($error)) {
-            $template->assign('error', $error);
-        }
-
-        $template->display("LoginForm.tpl");
+        $template->assign('success', $success);
+        $template->assign('error', $error);
         break;
 
+
     case "logout":
+        session_unset();
         session_destroy();
-        header('Location: index.php?action=login');
-        exit;
+        header('Location: index.php?action=aanbod', true, 303);
+        exit();
+
     default:
         $template->display("Layout.tpl");
 }
-
 ?>
