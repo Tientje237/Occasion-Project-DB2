@@ -1,5 +1,3 @@
-{*{extends file='Layout.tpl'}*}
-
 {block name="contentLogin"}
 
 

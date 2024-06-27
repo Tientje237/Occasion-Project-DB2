@@ -1,5 +1,3 @@
-{*{extends file='Layout.tpl'}*}
-
 {block name="contentShowCase"}
     <h1>Alle aanbod:</h1>
     {if !empty($allCars)}

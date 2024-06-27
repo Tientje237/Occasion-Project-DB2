@@ -1,4 +1,3 @@
-
 {block name="content"}
     <title>Occasion Auto Details</title>
 

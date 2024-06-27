@@ -1,5 +1,3 @@
-{*{extends file='Layout.tpl'}*}
-
 {block name="contentRegister"}
 
     <h1>Register formulier</h1>

@@ -1,5 +1,3 @@
-{*{extends file="Layout.tpl"}*}
-
 {block name="content"}
     <title>Occasion Favorieten</title>
     <h2>Favoriete Auto's</h2>

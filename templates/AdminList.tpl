@@ -1,4 +1,3 @@
-
 {block name="content"}
     <title>Admin Dashboard</title>
     <br>
